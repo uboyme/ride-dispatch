@@ -21,6 +21,7 @@ import org.springframework.data.redis.domain.geo.Metrics;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -74,10 +75,11 @@ public class DispatchService {
 
             redis.opsForGeo().remove(key, driverId.toString());
 
-            // 订单：待派单 → 已派单
+            // 订单：待派单 → 已派单，记录派单时间（超时判断用）
             int orderRows = orderMapper.update(null, new LambdaUpdateWrapper<RideOrder>()
                     .set(RideOrder::getStatus, OrderStatus.DISPATCHED)
                     .set(RideOrder::getDriverId, driverId)
+                    .set(RideOrder::getDispatchedAt, LocalDateTime.now())
                     .eq(RideOrder::getId, orderId)
                     .eq(RideOrder::getStatus, OrderStatus.PENDING_DISPATCH));
             if (orderRows == 0) {

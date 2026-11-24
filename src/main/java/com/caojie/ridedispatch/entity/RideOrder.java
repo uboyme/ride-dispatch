@@ -31,6 +31,7 @@ public class RideOrder {
     private String cancelReason;
     private BigDecimal cancelFee;
     private LocalDateTime createdAt;
+    private LocalDateTime dispatchedAt;
     private LocalDateTime acceptedAt;
     private LocalDateTime arrivedAt;
     private LocalDateTime pickedUpAt;

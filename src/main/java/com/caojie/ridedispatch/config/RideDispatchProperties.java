@@ -11,7 +11,9 @@ public record RideDispatchProperties(
         long freeCancellationMinutes,
         double dispatchRadiusKm,
         int candidateDriverLimit,
-        String geoKeyPrefix) {
+        String geoKeyPrefix,
+        long acceptTimeoutSeconds,
+        long dispatchGiveUpMinutes) {
 
     public String geoKey(ServiceType serviceType) {
         return geoKeyPrefix + serviceType.getCode();

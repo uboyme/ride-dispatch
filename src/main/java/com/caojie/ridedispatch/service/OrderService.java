@@ -174,6 +174,43 @@ public class OrderService {
         return orderMapper.selectById(orderId);
     }
 
+    // 接单超时：订单退回待派单，记一条超时拒单，司机设为离线
+    // 司机不响应多半是没信号或人走开了，设为离线避免继续给他派单；他回来后需要手动重新上线
+    @Transactional
+    public void handleAcceptTimeout(Long orderId, Long driverId) {
+        int rows = orderMapper.update(null, new LambdaUpdateWrapper<RideOrder>()
+                .set(RideOrder::getStatus, OrderStatus.PENDING_DISPATCH)
+                .set(RideOrder::getDriverId, null)
+                .eq(RideOrder::getId, orderId)
+                .eq(RideOrder::getStatus, OrderStatus.DISPATCHED)
+                .eq(RideOrder::getDriverId, driverId));
+        // 影响 0 行：司机刚好接单了，或者订单被取消了，都不用处理
+        if (rows == 0) return;
+
+        OrderReject reject = new OrderReject();
+        reject.setOrderId(orderId);
+        reject.setDriverId(driverId);
+        reject.setReason(RejectReason.TIMEOUT);
+        rejectMapper.insert(reject);
+
+        driverMapper.update(null, new LambdaUpdateWrapper<Driver>()
+                .set(Driver::getStatus, DriverStatus.OFFLINE)
+                .eq(Driver::getId, driverId)
+                .eq(Driver::getStatus, DriverStatus.DISPATCHED));
+    }
+
+    // 系统取消：待派单太久仍没有司机
+    public void systemCancel(Long orderId) {
+        orderMapper.update(null, new LambdaUpdateWrapper<RideOrder>()
+                .set(RideOrder::getStatus, OrderStatus.CANCELLED)
+                .set(RideOrder::getCancelBy, CancelBy.SYSTEM)
+                .set(RideOrder::getCancelReason, "长时间无司机接单")
+                .set(RideOrder::getCancelFee, BigDecimal.ZERO)
+                .set(RideOrder::getCancelledAt, LocalDateTime.now())
+                .eq(RideOrder::getId, orderId)
+                .eq(RideOrder::getStatus, OrderStatus.PENDING_DISPATCH));
+    }
+
     // 计算取消费：状态决定能不能取消，时间决定收不收钱
     private BigDecimal calcCancelFee(RideOrder order) {
         LocalDateTime now = LocalDateTime.now();
