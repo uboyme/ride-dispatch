@@ -3,6 +3,8 @@ package com.caojie.ridedispatch.entity;
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
+import com.caojie.ridedispatch.enums.DriverStatus;
+import com.caojie.ridedispatch.enums.ServiceType;
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -17,8 +19,8 @@ public class Driver {
     private String carPlate;
     private String carModel;
     private String carColor;
-    private Integer serviceType;
-    private Integer status;
+    private ServiceType serviceType;
+    private DriverStatus status;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 

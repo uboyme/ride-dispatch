@@ -46,4 +46,9 @@ public class OrderController {
     public String complete(@PathVariable Long id, @RequestParam Long driverId) {
         orderService.complete(id, driverId); return "ok";
     }
+
+    @PostMapping("/{id}/cancel")
+    public RideOrder cancel(@PathVariable Long id, @RequestParam Long passengerId) {
+        return orderService.cancel(id, passengerId);
+    }
 }

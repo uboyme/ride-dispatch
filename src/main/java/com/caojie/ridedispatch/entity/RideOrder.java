@@ -1,6 +1,9 @@
 package com.caojie.ridedispatch.entity;
 
 import com.baomidou.mybatisplus.annotation.TableName;
+import com.caojie.ridedispatch.enums.CancelBy;
+import com.caojie.ridedispatch.enums.OrderStatus;
+import com.caojie.ridedispatch.enums.ServiceType;
 import lombok.Data;
 
 import java.math.BigDecimal;
@@ -12,8 +15,8 @@ public class RideOrder {
     private Long id;
     private Long passengerId;
     private Long driverId;
-    private Integer serviceType;
-    private Integer status;
+    private ServiceType serviceType;
+    private OrderStatus status;
     private BigDecimal startLng;
     private BigDecimal startLat;
     private String startAddress;
@@ -21,8 +24,9 @@ public class RideOrder {
     private BigDecimal endLat;
     private String endAddress;
     private BigDecimal estimatedFee;
-    private Integer cancelBy;
+    private CancelBy cancelBy;
     private String cancelReason;
+    private BigDecimal cancelFee;
     private LocalDateTime createdAt;
     private LocalDateTime acceptedAt;
     private LocalDateTime arrivedAt;

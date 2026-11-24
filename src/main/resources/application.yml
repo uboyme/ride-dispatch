@@ -15,3 +15,10 @@ mybatis-plus:
   configuration:
     map-underscore-to-camel-case: true
     log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+
+ride-dispatch:
+  cancellation-fee: "5.00"
+  free-cancellation-minutes: 3
+  dispatch-radius-km: 3
+  candidate-driver-limit: 10
+  geo-key-prefix: "driver:geo:"
