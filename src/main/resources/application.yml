@@ -22,7 +22,7 @@ ride-dispatch:
   dispatch-radius-km: 3
   candidate-driver-limit: 10
   geo-key-prefix: "driver:geo:"
-  # 司机多少秒不响应算接单超时
+  # 司机多少秒不响应算接单超时,yml 里的短横线写法 accept-timeout-seconds，会自动对应 Java 里的驼峰 acceptTimeoutSeconds
   accept-timeout-seconds: 15
   # 待派单超过多少分钟仍派不出去，系统自动取消
   dispatch-give-up-minutes: 5
