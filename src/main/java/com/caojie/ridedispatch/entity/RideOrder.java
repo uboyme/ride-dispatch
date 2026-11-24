@@ -1,5 +1,7 @@
 package com.caojie.ridedispatch.entity;
 
+import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.caojie.ridedispatch.enums.CancelBy;
 import com.caojie.ridedispatch.enums.OrderStatus;
@@ -12,6 +14,7 @@ import java.time.LocalDateTime;
 @Data
 @TableName("ride_order")
 public class RideOrder {
+    @TableId(type = IdType.AUTO)
     private Long id;
     private Long passengerId;
     private Long driverId;
