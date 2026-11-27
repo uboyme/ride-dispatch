@@ -1,7 +1,9 @@
 package com.caojie.ridedispatch.common;
+
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+
 @Getter
 @RequiredArgsConstructor
 public enum ErrorCode {
@@ -15,6 +17,7 @@ public enum ErrorCode {
     DRIVER_STATUS_CONFLICT(40901, HttpStatus.CONFLICT, "司机当前状态不允许该操作"),
     ORDER_STATUS_CONFLICT(40902, HttpStatus.CONFLICT, "订单当前状态不允许该操作"),
     ORDER_CHANGED(40903, HttpStatus.CONFLICT, "订单状态已变化，请刷新后重试"),
+    UNSUPPORTED_MEDIA_TYPE(41500, HttpStatus.UNSUPPORTED_MEDIA_TYPE, "请求体必须是 JSON 格式"),
 
     SYSTEM_ERROR(50000, HttpStatus.INTERNAL_SERVER_ERROR, "系统繁忙，请稍后重试");
 

@@ -1,7 +1,9 @@
 package com.caojie.ridedispatch.common;
+
 import lombok.Getter;
+
 @Getter
-public class BizException extends RuntimeException{
+public class BizException extends RuntimeException {
     private final ErrorCode errorCode;
 
     // 用错误码的默认提示

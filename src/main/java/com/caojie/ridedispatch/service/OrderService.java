@@ -2,15 +2,13 @@ package com.caojie.ridedispatch.service;
 
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.toolkit.support.SFunction;
+import com.caojie.ridedispatch.common.BizException;
+import com.caojie.ridedispatch.common.ErrorCode;
 import com.caojie.ridedispatch.config.RideDispatchProperties;
 import com.caojie.ridedispatch.entity.Driver;
 import com.caojie.ridedispatch.entity.OrderReject;
 import com.caojie.ridedispatch.entity.RideOrder;
-import com.caojie.ridedispatch.enums.CancelBy;
-import com.caojie.ridedispatch.enums.DriverStatus;
-import com.caojie.ridedispatch.enums.OrderStatus;
-import com.caojie.ridedispatch.enums.RejectReason;
-import com.caojie.ridedispatch.enums.ServiceType;
+import com.caojie.ridedispatch.enums.*;
 import com.caojie.ridedispatch.mapper.DriverMapper;
 import com.caojie.ridedispatch.mapper.OrderRejectMapper;
 import com.caojie.ridedispatch.mapper.RideOrderMapper;
@@ -20,9 +18,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-
-import com.caojie.ridedispatch.common.BizException;
-import com.caojie.ridedispatch.common.ErrorCode;
 @Service
 @RequiredArgsConstructor
 public class OrderService {

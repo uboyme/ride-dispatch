@@ -1,6 +1,8 @@
 package com.caojie.ridedispatch.service;
 
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
+import com.caojie.ridedispatch.common.BizException;
+import com.caojie.ridedispatch.common.ErrorCode;
 import com.caojie.ridedispatch.config.RideDispatchProperties;
 import com.caojie.ridedispatch.entity.Driver;
 import com.caojie.ridedispatch.enums.DriverStatus;
@@ -9,8 +11,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.geo.Point;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
-import com.caojie.ridedispatch.common.BizException;
-import com.caojie.ridedispatch.common.ErrorCode;
 @Service
 @RequiredArgsConstructor
 public class DriverService {
