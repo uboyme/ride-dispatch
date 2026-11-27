@@ -2,25 +2,23 @@ package com.caojie.ridedispatch.service;
 
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.toolkit.support.SFunction;
+import com.caojie.ridedispatch.common.BizException;
+import com.caojie.ridedispatch.common.ErrorCode;
 import com.caojie.ridedispatch.config.RideDispatchProperties;
 import com.caojie.ridedispatch.entity.Driver;
 import com.caojie.ridedispatch.entity.OrderReject;
 import com.caojie.ridedispatch.entity.RideOrder;
-import com.caojie.ridedispatch.enums.CancelBy;
-import com.caojie.ridedispatch.enums.DriverStatus;
-import com.caojie.ridedispatch.enums.OrderStatus;
-import com.caojie.ridedispatch.enums.RejectReason;
-import com.caojie.ridedispatch.enums.ServiceType;
+import com.caojie.ridedispatch.enums.*;
 import com.caojie.ridedispatch.mapper.DriverMapper;
 import com.caojie.ridedispatch.mapper.OrderRejectMapper;
 import com.caojie.ridedispatch.mapper.RideOrderMapper;
+import jakarta.validation.constraints.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-
 @Service
 @RequiredArgsConstructor
 public class OrderService {
@@ -30,9 +28,25 @@ public class OrderService {
     private final DispatchService dispatchService;
     private final RideDispatchProperties properties;
 
-    public record CreateOrderRequest(Long passengerId, ServiceType serviceType,
-                                      BigDecimal startLng, BigDecimal startLat, String startAddress,
-                                      BigDecimal endLng, BigDecimal endLat, String endAddress){}
+    public record CreateOrderRequest(
+            @NotNull(message = "不能为空") Long passengerId,
+            @NotNull(message = "不能为空") ServiceType serviceType,
+            @NotNull(message = "不能为空")
+            @DecimalMin(value = "-180", message = "必须在 -180 到 180 之间")
+            @DecimalMax(value = "180", message = "必须在 -180 到 180 之间") BigDecimal startLng,
+            @NotNull(message = "不能为空")
+            @DecimalMin(value = "-90", message = "必须在 -90 到 90 之间")
+            @DecimalMax(value = "90", message = "必须在 -90 到 90 之间") BigDecimal startLat,
+            @NotBlank(message = "不能为空")
+            @Size(max = 128, message = "最长 128 个字") String startAddress,
+            @NotNull(message = "不能为空")
+            @DecimalMin(value = "-180", message = "必须在 -180 到 180 之间")
+            @DecimalMax(value = "180", message = "必须在 -180 到 180 之间") BigDecimal endLng,
+            @NotNull(message = "不能为空")
+            @DecimalMin(value = "-90", message = "必须在 -90 到 90 之间")
+            @DecimalMax(value = "90", message = "必须在 -90 到 90 之间") BigDecimal endLat,
+            @NotBlank(message = "不能为空")
+            @Size(max = 128, message = "最长 128 个字") String endAddress) {}
 
     // 乘客下单：创建订单，然后立刻派单
     // 不加事务：订单先落库，派单失败时订单停在待派单，由定时任务重试
@@ -63,7 +77,7 @@ public class OrderService {
                 .eq(RideOrder::getId, orderId)
                 .eq(RideOrder::getStatus, OrderStatus.DISPATCHED)
                 .eq(RideOrder::getDriverId, driverId));
-        if (rows == 0) throw new RuntimeException("当前订单不能接单");
+        if (rows == 0) throw new BizException(ErrorCode.ORDER_STATUS_CONFLICT, "当前订单不能接单");
 
         driverMapper.update(null, new LambdaUpdateWrapper<Driver>()
                 .set(Driver::getStatus, DriverStatus.IN_SERVICE)
@@ -80,7 +94,7 @@ public class OrderService {
                 .eq(RideOrder::getId, orderId)
                 .eq(RideOrder::getStatus, OrderStatus.DISPATCHED)
                 .eq(RideOrder::getDriverId, driverId));
-        if (rows == 0) throw new RuntimeException("当前订单不能拒单");
+        if (rows == 0) throw new BizException(ErrorCode.ORDER_STATUS_CONFLICT, "当前订单不能拒单");
 
         OrderReject reject = new OrderReject();
         reject.setOrderId(orderId);
@@ -106,7 +120,7 @@ public class OrderService {
                 .eq(RideOrder::getId, orderId)
                 .eq(RideOrder::getStatus, from)
                 .eq(RideOrder::getDriverId, driverId));
-        if (rows == 0) throw new RuntimeException("当前状态不能执行该操作");
+        if (rows == 0) throw new BizException(ErrorCode.ORDER_STATUS_CONFLICT, "当前状态不能执行该操作");
     }
 
     // 出发去接乘客：已接单 → 接驾中
@@ -116,7 +130,7 @@ public class OrderService {
                 .eq(RideOrder::getId, orderId)
                 .eq(RideOrder::getStatus, OrderStatus.ACCEPTED)
                 .eq(RideOrder::getDriverId, driverId));
-        if (rows == 0) throw new RuntimeException("当前状态不能出发");
+        if (rows == 0) throw new BizException(ErrorCode.ORDER_STATUS_CONFLICT, "当前状态不能出发");
     }
 
     // 到达上车点：接驾中 → 司机已到达
@@ -146,10 +160,10 @@ public class OrderService {
         RideOrder order = orderMapper.selectById(orderId);
         // 只能取消自己的订单
         if (order == null || !order.getPassengerId().equals(passengerId)) {
-            throw new RuntimeException("订单不存在");
+            throw new BizException(ErrorCode.ORDER_NOT_FOUND);
         }
         OrderStatus status = order.getStatus();
-        if (!status.canCancel()) throw new RuntimeException("当前状态不能取消");
+        if (!status.canCancel()) throw new BizException(ErrorCode.ORDER_STATUS_CONFLICT, "当前状态不能取消");
 
         BigDecimal fee = calcCancelFee(order);
 
@@ -162,7 +176,7 @@ public class OrderService {
                 .set(RideOrder::getCancelledAt, LocalDateTime.now())
                 .eq(RideOrder::getId, orderId)
                 .eq(RideOrder::getStatus, status));
-        if (rows == 0) throw new RuntimeException("订单状态已变化，请刷新后重试");
+        if (rows == 0) throw new BizException(ErrorCode.ORDER_CHANGED);
 
         // 有司机的话，把司机放回空闲
         if (order.getDriverId() != null) {
