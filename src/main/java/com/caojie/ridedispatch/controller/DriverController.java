@@ -1,10 +1,7 @@
 package com.caojie.ridedispatch.controller;
 
-import com.caojie.ridedispatch.common.BizException;
-import com.caojie.ridedispatch.common.ErrorCode;
 import com.caojie.ridedispatch.common.Result;
 import com.caojie.ridedispatch.entity.Driver;
-import com.caojie.ridedispatch.mapper.DriverMapper;
 import com.caojie.ridedispatch.service.DriverService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.DecimalMax;
@@ -17,7 +14,6 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/drivers")
 @RequiredArgsConstructor
 public class DriverController {
-    private final DriverMapper driverMapper;
     private final DriverService driverService;
 
     public record LocationRequest(
