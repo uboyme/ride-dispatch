@@ -3,6 +3,7 @@ package com.caojie.ridedispatch.controller;
 import com.caojie.ridedispatch.common.Result;
 import com.caojie.ridedispatch.entity.RideOrder;
 import com.caojie.ridedispatch.service.OrderService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
@@ -13,7 +14,7 @@ public class OrderController {
     private final OrderService orderService;
 
     @PostMapping
-    public Result<RideOrder> create(@RequestBody OrderService.CreateOrderRequest req) {
+    public Result<RideOrder> create(@Valid @RequestBody OrderService.CreateOrderRequest req) {
         return Result.ok(orderService.create(req));
     }
 

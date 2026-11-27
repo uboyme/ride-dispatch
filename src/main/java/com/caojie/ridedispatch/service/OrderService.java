@@ -12,6 +12,7 @@ import com.caojie.ridedispatch.enums.*;
 import com.caojie.ridedispatch.mapper.DriverMapper;
 import com.caojie.ridedispatch.mapper.OrderRejectMapper;
 import com.caojie.ridedispatch.mapper.RideOrderMapper;
+import jakarta.validation.constraints.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -27,9 +28,25 @@ public class OrderService {
     private final DispatchService dispatchService;
     private final RideDispatchProperties properties;
 
-    public record CreateOrderRequest(Long passengerId, ServiceType serviceType,
-                                      BigDecimal startLng, BigDecimal startLat, String startAddress,
-                                      BigDecimal endLng, BigDecimal endLat, String endAddress){}
+    public record CreateOrderRequest(
+            @NotNull(message = "不能为空") Long passengerId,
+            @NotNull(message = "不能为空") ServiceType serviceType,
+            @NotNull(message = "不能为空")
+            @DecimalMin(value = "-180", message = "必须在 -180 到 180 之间")
+            @DecimalMax(value = "180", message = "必须在 -180 到 180 之间") BigDecimal startLng,
+            @NotNull(message = "不能为空")
+            @DecimalMin(value = "-90", message = "必须在 -90 到 90 之间")
+            @DecimalMax(value = "90", message = "必须在 -90 到 90 之间") BigDecimal startLat,
+            @NotBlank(message = "不能为空")
+            @Size(max = 128, message = "最长 128 个字") String startAddress,
+            @NotNull(message = "不能为空")
+            @DecimalMin(value = "-180", message = "必须在 -180 到 180 之间")
+            @DecimalMax(value = "180", message = "必须在 -180 到 180 之间") BigDecimal endLng,
+            @NotNull(message = "不能为空")
+            @DecimalMin(value = "-90", message = "必须在 -90 到 90 之间")
+            @DecimalMax(value = "90", message = "必须在 -90 到 90 之间") BigDecimal endLat,
+            @NotBlank(message = "不能为空")
+            @Size(max = 128, message = "最长 128 个字") String endAddress) {}
 
     // 乘客下单：创建订单，然后立刻派单
     // 不加事务：订单先落库，派单失败时订单停在待派单，由定时任务重试
