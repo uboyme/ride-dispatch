@@ -21,6 +21,8 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
+import com.caojie.ridedispatch.common.BizException;
+import com.caojie.ridedispatch.common.ErrorCode;
 @Service
 @RequiredArgsConstructor
 public class OrderService {
@@ -63,7 +65,7 @@ public class OrderService {
                 .eq(RideOrder::getId, orderId)
                 .eq(RideOrder::getStatus, OrderStatus.DISPATCHED)
                 .eq(RideOrder::getDriverId, driverId));
-        if (rows == 0) throw new RuntimeException("当前订单不能接单");
+        if (rows == 0) throw new BizException(ErrorCode.ORDER_STATUS_CONFLICT, "当前订单不能接单");
 
         driverMapper.update(null, new LambdaUpdateWrapper<Driver>()
                 .set(Driver::getStatus, DriverStatus.IN_SERVICE)
@@ -80,7 +82,7 @@ public class OrderService {
                 .eq(RideOrder::getId, orderId)
                 .eq(RideOrder::getStatus, OrderStatus.DISPATCHED)
                 .eq(RideOrder::getDriverId, driverId));
-        if (rows == 0) throw new RuntimeException("当前订单不能拒单");
+        if (rows == 0) throw new BizException(ErrorCode.ORDER_STATUS_CONFLICT, "当前订单不能拒单");
 
         OrderReject reject = new OrderReject();
         reject.setOrderId(orderId);
@@ -106,7 +108,7 @@ public class OrderService {
                 .eq(RideOrder::getId, orderId)
                 .eq(RideOrder::getStatus, from)
                 .eq(RideOrder::getDriverId, driverId));
-        if (rows == 0) throw new RuntimeException("当前状态不能执行该操作");
+        if (rows == 0) throw new BizException(ErrorCode.ORDER_STATUS_CONFLICT, "当前状态不能执行该操作");
     }
 
     // 出发去接乘客：已接单 → 接驾中
@@ -116,7 +118,7 @@ public class OrderService {
                 .eq(RideOrder::getId, orderId)
                 .eq(RideOrder::getStatus, OrderStatus.ACCEPTED)
                 .eq(RideOrder::getDriverId, driverId));
-        if (rows == 0) throw new RuntimeException("当前状态不能出发");
+        if (rows == 0) throw new BizException(ErrorCode.ORDER_STATUS_CONFLICT, "当前状态不能出发");
     }
 
     // 到达上车点：接驾中 → 司机已到达
@@ -146,10 +148,10 @@ public class OrderService {
         RideOrder order = orderMapper.selectById(orderId);
         // 只能取消自己的订单
         if (order == null || !order.getPassengerId().equals(passengerId)) {
-            throw new RuntimeException("订单不存在");
+            throw new BizException(ErrorCode.ORDER_NOT_FOUND);
         }
         OrderStatus status = order.getStatus();
-        if (!status.canCancel()) throw new RuntimeException("当前状态不能取消");
+        if (!status.canCancel()) throw new BizException(ErrorCode.ORDER_STATUS_CONFLICT, "当前状态不能取消");
 
         BigDecimal fee = calcCancelFee(order);
 
@@ -162,7 +164,7 @@ public class OrderService {
                 .set(RideOrder::getCancelledAt, LocalDateTime.now())
                 .eq(RideOrder::getId, orderId)
                 .eq(RideOrder::getStatus, status));
-        if (rows == 0) throw new RuntimeException("订单状态已变化，请刷新后重试");
+        if (rows == 0) throw new BizException(ErrorCode.ORDER_CHANGED);
 
         // 有司机的话，把司机放回空闲
         if (order.getDriverId() != null) {

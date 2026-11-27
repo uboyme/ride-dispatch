@@ -2,7 +2,7 @@ spring:
   application:
     name: ride-dispatch
   datasource:
-    url: jdbc:mysql://localhost:3307/ride_dispatch?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai
+    url: jdbc:mysql://localhost:3307/ride_dispatch?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&forceConnectionTimeZoneToSession=true
     username: root
     password: ${DB_PASSWORD:123456}
     driver-class-name: com.mysql.cj.jdbc.Driver

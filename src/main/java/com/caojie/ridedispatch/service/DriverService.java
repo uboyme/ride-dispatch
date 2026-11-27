@@ -9,7 +9,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.geo.Point;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
-
+import com.caojie.ridedispatch.common.BizException;
+import com.caojie.ridedispatch.common.ErrorCode;
 @Service
 @RequiredArgsConstructor
 public class DriverService {
@@ -19,13 +20,13 @@ public class DriverService {
     // 上线：离线 → 空闲，再写入 GEO
     public void online(Long driverId, double lng, double lat) {
         Driver driver = driverMapper.selectById(driverId);
-        if (driver == null) throw new RuntimeException("司机不存在");
+        if (driver == null) throw new BizException(ErrorCode.DRIVER_NOT_FOUND);
 
         int rows = driverMapper.update(null, new LambdaUpdateWrapper<Driver>()
                 .set(Driver::getStatus, DriverStatus.AVAILABLE)
                 .eq(Driver::getId, driverId)
                 .eq(Driver::getStatus, DriverStatus.OFFLINE));
-        if (rows == 0) throw new RuntimeException("当前状态不能上线");
+        if (rows == 0) throw new BizException(ErrorCode.DRIVER_STATUS_CONFLICT, "当前状态不能上线");
 
         redis.opsForGeo().add(properties.geoKey(driver.getServiceType()),
                 new Point(lng, lat), driverId.toString());
@@ -41,13 +42,13 @@ public class DriverService {
     // 下线：空闲 → 离线，再从 GEO 移除
     public void offline(Long driverId) {
         Driver driver = driverMapper.selectById(driverId);
-        if (driver == null) throw new RuntimeException("司机不存在");
+        if (driver == null) throw new BizException(ErrorCode.DRIVER_NOT_FOUND);
 
         int rows = driverMapper.update(null, new LambdaUpdateWrapper<Driver>()
                 .set(Driver::getStatus, DriverStatus.OFFLINE)
                 .eq(Driver::getId, driverId)
                 .eq(Driver::getStatus, DriverStatus.AVAILABLE));
-        if (rows == 0) throw new RuntimeException("当前状态不能下线");
+        if (rows == 0) throw new BizException(ErrorCode.DRIVER_STATUS_CONFLICT, "当前状态不能下线");
 
         redis.opsForGeo().remove(properties.geoKey(driver.getServiceType()), driverId.toString());
     }
