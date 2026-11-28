@@ -2,9 +2,9 @@
 
 网约车派单系统（Spring Boot 4 + MySQL + Redis GEO）。这份文档记录每一次迭代：做了什么、为什么这样做、怎么验证。最新的记录在最前面。
 
-## 当前状态（2026-11-27）
+## 当前状态（2026-11-28）
 
-**阶段**：v1 核心流程（目标 12/1 前上线）。业务逻辑和异常体系已全部完成，剩下接口文档、模拟器、部署和 README。
+**阶段**：v1 核心流程（目标 12/1 前上线）。业务逻辑、异常体系、接口文档已完成，剩下模拟器、部署和 README。
 
 - [x] 司机上线、下线、位置上报（Redis GEO）
 - [x] 下单 + 贪心派单
@@ -17,7 +17,7 @@
 - [x] 建表语句整理成 `sql/schema.sql` 放进仓库（部署时要用）
 - [x] 统一返回格式、全局异常处理、参数校验
 - [x] 修复数据库连接时区（见 2026-11-27 记录）
-- [ ] 接口文档（Knife4j）
+- [x] 接口文档（springdoc-openapi，访问 `/swagger-ui.html`）
 - [ ] 简易司机模拟器
 - [ ] 部署到云服务器
 - [ ] README
@@ -25,6 +25,31 @@
 ---
 
 ## 迭代记录
+
+### 2026-11-28 接口文档
+
+接入 springdoc-openapi，启动后自动生成接口文档：
+
+- 网页界面：`http://localhost:8080/swagger-ui.html`，可以直接在页面上调试接口（Try it out）
+- OpenAPI 描述（JSON）：`http://localhost:8080/v3/api-docs`，Apifox、Postman 可以直接导入
+
+| 修改 | 文件 |
+|---|---|
+| 引入 `springdoc-openapi-starter-webmvc-ui` 3.2.1 | `pom.xml` |
+| 文档标题、说明、版本 | 新增 `config/OpenApiConfig.java` |
+| 接口分组（`@Tag`）和每个接口的中文说明（`@Operation`） | 两个 Controller |
+| 请求字段的说明和示例值（`@Schema`），调试时请求体自动填好 | `LocationRequest`、`CreateOrderRequest`、`CreateDriverRequest` |
+
+**设计说明**
+
+- **没有用原计划的 Knife4j**：Knife4j 4.x 基于 Spring Boot 3 那一代的 springdoc，和本项目的 Spring Boot 4 不一定兼容；springdoc 官方说明 Spring Boot 4 要用 springdoc-openapi v3，所以直接用它。
+- **校验注解会自动体现在文档里**：springdoc 读取 `@NotNull`、`@DecimalMin` 等注解，把字段标成必填、标出取值范围，不用重复写。
+- **springdoc 的原理**：启动时扫描所有 Controller，读取 `@PostMapping`、`@PathVariable`、`@RequestBody` 等注解，按 OpenAPI 规范生成接口描述，网页根据这份描述渲染。
+
+**验证方式**
+
+1. 打开 `/swagger-ui.html`，看到"司机""订单"两个分组，每个接口有中文标题。
+2. "乘客下单" → Try it out，请求体已填好示例值 → Execute，下单成功。
 
 ### 2026-11-27 异常体系与参数校验
 
@@ -277,6 +302,8 @@ Spring 的 `@Transactional` 靠**代理**实现：外部调用先经过代理，
 |---|---|
 | 接口参数里的 `driverId`、`passengerId` 由请求自己传，可以冒充别人 | v4 做鉴权时改为从登录凭证解析 |
 | 司机一次接单超时就被设为离线，太严格（测试中发现：错过一单就要重新上线） | 改为连续超时 N 次才下线，司机表加"连续超时次数"字段，接单时清零 |
+| 超时没响应和主动拒单一样，司机会被这一单**永久排除**（测试中发现：张三超时后重新上线，附近只有他一个司机，订单却一直派不到他，最后被系统取消） | 区分两种情况：主动拒单永久排除；超时只排除一段时间（如 2 分钟），或者只在有其他司机时才排除 |
+| 接口文档会暴露全部接口 | 部署时在生产环境配置里关闭（`springdoc.api-docs.enabled: false`、`springdoc.swagger-ui.enabled: false`） |
 | 定时任务拿数据库生成的 `created_at` 和 Java 的当前时间比较，依赖两边时钟一致 | 改为在 SQL 里用数据库的 `NOW()` 比较，可以和 v3 延迟消息改造一起做 |
 | 请求对象分散在 Controller 和 Service 里（如 `OrderService.CreateOrderRequest`） | v1 收尾时统一挪到 `dto` 包 |
 | `reject()` 里如果重新派单抛出异常，整个拒单会一起回滚 | 观察实际情况，必要时把重新派单交给定时任务 |
