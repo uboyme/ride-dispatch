@@ -1,5 +1,6 @@
 package com.caojie.ridedispatch.service;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.toolkit.support.SFunction;
 import com.caojie.ridedispatch.common.BizException;
@@ -220,6 +221,17 @@ public class OrderService {
                 .set(Driver::getStatus, DriverStatus.OFFLINE)
                 .eq(Driver::getId, driverId)
                 .eq(Driver::getStatus, DriverStatus.DISPATCHED));
+    }
+
+    // 查询司机当前进行中的订单（司机端轮询用）
+    public RideOrder currentOrderOfDriver(Long driverId) {
+        return orderMapper.selectOne(new LambdaQueryWrapper<RideOrder>()
+                .eq(RideOrder::getDriverId, driverId)
+                .in(RideOrder::getStatus,
+                        OrderStatus.DISPATCHED, OrderStatus.ACCEPTED, OrderStatus.EN_ROUTE_TO_PICKUP,
+                        OrderStatus.ARRIVED, OrderStatus.IN_PROGRESS)
+                .orderByDesc(RideOrder::getId)
+                .last("LIMIT 1"));
     }
 
     // 系统取消：待派单太久仍没有司机
