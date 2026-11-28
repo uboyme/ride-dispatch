@@ -2,8 +2,11 @@ package com.caojie.ridedispatch.controller;
 
 import com.caojie.ridedispatch.common.Result;
 import com.caojie.ridedispatch.entity.Driver;
+import com.caojie.ridedispatch.entity.RideOrder;
 import com.caojie.ridedispatch.service.DriverService;
+import com.caojie.ridedispatch.service.OrderService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -19,6 +22,7 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 public class DriverController {
     private final DriverService driverService;
+    private final OrderService orderService;
 
     public record LocationRequest(
             @Schema(description = "经度", example = "116.397")
@@ -61,5 +65,11 @@ public class DriverController {
     public Result<Void> offline(@PathVariable Long id) {
         driverService.offline(id);
         return Result.ok();
+    }
+
+    @Operation(summary = "查询司机当前订单", description = "司机端轮询调用；没有进行中的订单时 data 为 null")
+    @GetMapping("/{id}/current-order")
+    public Result<RideOrder> currentOrder(@Parameter(description = "司机 ID", example = "1") @PathVariable Long id) {
+        return Result.ok(orderService.currentOrderOfDriver(id));
     }
 }
