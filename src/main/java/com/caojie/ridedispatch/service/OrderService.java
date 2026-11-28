@@ -12,6 +12,7 @@ import com.caojie.ridedispatch.enums.*;
 import com.caojie.ridedispatch.mapper.DriverMapper;
 import com.caojie.ridedispatch.mapper.OrderRejectMapper;
 import com.caojie.ridedispatch.mapper.RideOrderMapper;
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -29,22 +30,30 @@ public class OrderService {
     private final RideDispatchProperties properties;
 
     public record CreateOrderRequest(
+            @Schema(description = "乘客 ID", example = "1001")
             @NotNull(message = "不能为空") Long passengerId,
+            @Schema(description = "服务类型：1 快车，2 专车", example = "1")
             @NotNull(message = "不能为空") ServiceType serviceType,
+            @Schema(description = "起点经度", example = "116.400")
             @NotNull(message = "不能为空")
             @DecimalMin(value = "-180", message = "必须在 -180 到 180 之间")
             @DecimalMax(value = "180", message = "必须在 -180 到 180 之间") BigDecimal startLng,
+            @Schema(description = "起点纬度", example = "39.910")
             @NotNull(message = "不能为空")
             @DecimalMin(value = "-90", message = "必须在 -90 到 90 之间")
             @DecimalMax(value = "90", message = "必须在 -90 到 90 之间") BigDecimal startLat,
+            @Schema(description = "起点地址", example = "天安门")
             @NotBlank(message = "不能为空")
             @Size(max = 128, message = "最长 128 个字") String startAddress,
+            @Schema(description = "终点经度", example = "116.480")
             @NotNull(message = "不能为空")
             @DecimalMin(value = "-180", message = "必须在 -180 到 180 之间")
             @DecimalMax(value = "180", message = "必须在 -180 到 180 之间") BigDecimal endLng,
+            @Schema(description = "终点纬度", example = "39.990")
             @NotNull(message = "不能为空")
             @DecimalMin(value = "-90", message = "必须在 -90 到 90 之间")
             @DecimalMax(value = "90", message = "必须在 -90 到 90 之间") BigDecimal endLat,
+            @Schema(description = "终点地址", example = "望京")
             @NotBlank(message = "不能为空")
             @Size(max = 128, message = "最长 128 个字") String endAddress) {}
 
